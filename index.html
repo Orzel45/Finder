@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nick Finder</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(45deg, #2b5876, #4e4376);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .container {
+      width: 90%;
+      max-width: 600px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    h1 {
+      margin-bottom: 20px;
+      font-size: 2.2rem;
+      font-weight: 600;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      position: relative;
+      display: inline-block;
+    }
+    
+    h1:after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #fff, transparent);
+      animation: shimmer 3s infinite;
+    }
+    
+    .search-box {
+      display: flex;
+      margin: 25px 0;
+      position: relative;
+    }
+    
+    input {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+    }
+    
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+    
+    button {
+      background: linear-gradient(45deg, #8a2387, #e94057, #f27121);
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 50px;
+      margin-left: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      letter-spacing: 1px;
+      transition: transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(1px);
+    }
+    
+    .result-container {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 15px;
+      min-height: 100px;
+      background: rgba(0, 0, 0, 0.3);
+      transition: all 0.5s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .result-container.found {
+      background: rgba(0, 255, 0, 0.1);
+      border: 1px solid rgba(0, 255, 0, 0.3);
+    }
+    
+    .result-container.not-found {
+      background: rgba(255, 0, 0, 0.1);
+      border: 1px solid rgba(255, 0, 0, 0.3);
+    }
+    
+    .user-info {
+      width: 100%;
+      text-align: left;
+      margin-top: 15px;
+    }
+    
+    .detail-row {
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .detail-label {
+      font-weight: bold;
+      width: 40%;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .detail-value {
+      width: 60%;
+    }
+    
+    .loading {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid #fff;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    .result-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .pulse {
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -100% 0; }
+      100% { background-position: 100% 0; }
+    }
+    
+    .particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      pointer-events: none;
+    }
+    
+    footer {
+      margin-top: 40px;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+    
+    .ip-address {
+      color: #ff9800;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="particles" id="particles"></div>
+    <h1>Wyszukiwarka nicków</h1>
+    <div class="search-box">
+      <input type="text" id="nickInput" placeholder="Wpisz nick gracza..." autocomplete="off">
+      <button onclick="searchNick()">Szukaj</button>
+    </div>
+    
+    <div class="loading" id="loading"></div>
+    
+    <div class="result-container" id="resultContainer">
+      <div id="resultIcon" class="result-icon"></div>
+      <p id="result">Wprowadź nick gracza, aby sprawdzić informacje</p>
+      <div class="user-info hidden" id="userInfo">
+        <!-- Informacje o graczu będą tutaj -->
+      </div>
+    </div>
+  </div>
+  
+  <footer>© 2025 Nick Finder - Bezpieczne sprawdzanie danych</footer>
+
+  <script>
+    // Zmienna na przechowywanie danych z pliku
+    let fileData = '';
+    let fileLines = [];
+    
+    // Tworzenie efektu cząsteczek w tle
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 20;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        // Losowa pozycja, rozmiar i opóźnienie animacji
+        const size = Math.random() * 10 + 3;
+        const left = Math.random() * 100;
+        const top = Math.random() * 100;
+        const duration = Math.random() * 20 + 10;
+        const delay = Math.random() * 5;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${left}%`;
+        particle.style.top = `${top}%`;
+        particle.style.opacity = Math.random() * 0.5 + 0.1;
+        
+        // Animacja unoszenia się
+        particle.style.animation = `pulse ${duration}s ${delay}s infinite alternate`;
+        
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // Funkcja do ładowania danych z pliku wyciek.txt
+    async function loadFileData() {
+      try {
+        const response = await fetch('wyciek.txt');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        fileData = await response.text();
+        fileLines = fileData.split('\n').map(line => line.trim());
+        console.log('Plik wyciek.txt został pomyślnie wczytany');
+      } catch (error) {
+        console.error('Błąd przy wczytywaniu pliku wyciek.txt:', error);
+        document.getElementById('result').textContent = 
+          'Błąd wczytywania pliku wyciek.txt. Upewnij się, że plik istnieje w folderze.';
+      }
+    }
+
+    // Funkcja do parsowania linii z informacjami o użytkowniku
+    function parseUserLine(line) {
+      // Zakładamy, że dane w pliku są rozdzielone przecinkami, dwukropkami lub innym separatorem
+      // Format przykładowy: "nickname:email@example.com:192.168.1.1:2023-04-15:admin"
+      const userInfo = {};
+      
+      // Sprawdzamy różne możliwe formaty
+      if (line.includes(':')) {
+        const parts = line.split(':');
+        if (parts.length >= 1) userInfo.nick = parts[0].trim();
+        if (parts.length >= 2) userInfo.email = parts[1].trim();
+        if (parts.length >= 3) {
+          // Sprawdzamy czy część wygląda jak IP (zawiera kropki i cyfry)
+          if (parts[2].trim().match(/\d+\.\d+\.\d+\.\d+/)) {
+            userInfo.ip = parts[2].trim();
+            if (parts.length >= 4) userInfo.data = parts[3].trim();
+            if (parts.length >= 5) userInfo.rola = parts[4].trim();
+          } else {
+            userInfo.data = parts[2].trim();
+            if (parts.length >= 4) userInfo.rola = parts[3].trim();
+          }
+        }
+      } else if (line.includes(',')) {
+        const parts = line.split(',');
+        if (parts.length >= 1) userInfo.nick = parts[0].trim();
+        if (parts.length >= 2) userInfo.email = parts[1].trim();
+        if (parts.length >= 3) {
+          if (parts[2].trim().match(/\d+\.\d+\.\d+\.\d+/)) {
+            userInfo.ip = parts[2].trim();
+            if (parts.length >= 4) userInfo.data = parts[3].trim();
+            if (parts.length >= 5) userInfo.rola = parts[4].trim();
+          } else {
+            userInfo.data = parts[2].trim();
+            if (parts.length >= 4) userInfo.rola = parts[3].trim();
+          }
+        }
+      } else if (line.includes('|')) {
+        const parts = line.split('|');
+        if (parts.length >= 1) userInfo.nick = parts[0].trim();
+        if (parts.length >= 2) userInfo.email = parts[1].trim();
+        if (parts.length >= 3) {
+          if (parts[2].trim().match(/\d+\.\d+\.\d+\.\d+/)) {
+            userInfo.ip = parts[2].trim();
+            if (parts.length >= 4) userInfo.data = parts[3].trim();
+            if (parts.length >= 5) userInfo.rola = parts[4].trim();
+          } else {
+            userInfo.data = parts[2].trim();
+            if (parts.length >= 4) userInfo.rola = parts[3].trim();
+          }
+        }
+      } else {
+        // Jeśli nie wykryto znanego separatora, sprawdzamy czy da się znaleźć IP w linii
+        const ipMatch = line.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/);
+        if (ipMatch) {
+          userInfo.ip = ipMatch[0];
+          // Próbujemy znaleźć email
+          const emailMatch = line.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
+          if (emailMatch) {
+            userInfo.email = emailMatch[0];
+          }
+          // Usuwamy znalezione IP i email z linii i traktujemy resztę jako nick
+          let nickPart = line.replace(ipMatch[0], '').replace(emailMatch ? emailMatch[0] : '', '').trim();
+          if (nickPart) userInfo.nick = nickPart;
+        } else {
+          userInfo.nick = line.trim();
+        }
+      }
+      
+      // Jeśli nie ma nicku, ale mamy IP, to użyjemy IP jako identyfikator
+      if (!userInfo.nick && userInfo.ip) {
+        userInfo.nick = "Użytkownik z IP " + userInfo.ip;
+      }
+      
+      return userInfo;
+    }
+
+    // Funkcja do sprawdzania, czy string wygląda jak adres IP
+    function isIPAddress(str) {
+      return /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(str);
+    }
+
+    async function searchNick() {
+      const input = document.getElementById("nickInput").value.trim();
+      if (!input) return;
+      
+      const resultContainer = document.getElementById("resultContainer");
+      const result = document.getElementById("result");
+      const resultIcon = document.getElementById("resultIcon");
+      const userInfo = document.getElementById("userInfo");
+      const loading = document.getElementById("loading");
+      
+      // Resetowanie klas
+      resultContainer.className = "result-container";
+      userInfo.classList.add("hidden");
+      userInfo.innerHTML = '';
+      
+      // Pokazanie animacji ładowania
+      loading.style.display = "block";
+      result.textContent = "Wyszukiwanie...";
+      
+      // Jeśli dane nie zostały jeszcze załadowane, załaduj je
+      if (fileLines.length === 0) {
+        await loadFileData();
+      }
+
+      // Symulacja czasu ładowania dla lepszego efektu
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      loading.style.display = "none";
+      
+      // Sprawdzamy, czy szukamy po IP czy po nicku
+      const searchingForIP = isIPAddress(input);
+      
+      // Wyszukiwanie w pliku
+      const lowerInput = input.toLowerCase();
+      const foundLineIndex = fileLines.findIndex(line => {
+        // Jeśli szukamy po IP, sprawdzamy tylko IP
+        if (searchingForIP) {
+          return line.includes(input);
+        }
+        // W przeciwnym wypadku szukamy normalnie
+        return line.toLowerCase().includes(lowerInput);
+      });
+      
+      if (foundLineIndex !== -1) {
+        const foundLine = fileLines[foundLineIndex];
+        resultContainer.classList.add("found");
+        resultIcon.textContent = "✅";
+        
+        if (searchingForIP) {
+          result.textContent = `Adres IP "${input}" znaleziony!`;
+        } else {
+          result.textContent = `Nick "${input}" znaleziony!`;
+        }
+        
+        // Parsowanie informacji o użytkowniku
+        const userData = parseUserLine(foundLine);
+        
+        // Wyświetlanie informacji o użytkowniku w określonej kolejności
+        const orderedFields = ['nick', 'email', 'ip', 'data', 'rola', 'haslo'];
+        
+        orderedFields.forEach(key => {
+          if (userData[key]) {
+            const row = document.createElement("div");
+            row.className = "detail-row";
+            
+            const label = document.createElement("div");
+            label.className = "detail-label";
+            label.textContent = formatLabel(key) + ":";
+            
+            const val = document.createElement("div");
+            val.className = "detail-value";
+            
+            // Specjalne formatowanie dla adresu IP
+            if (key === 'ip') {
+              val.innerHTML = `<span class="ip-address">${userData[key]}</span>`;
+            } else {
+              val.textContent = userData[key];
+            }
+            
+            row.appendChild(label);
+            row.appendChild(val);
+            userInfo.appendChild(row);
+          }
+        });
+        
+        // Dodajemy surowy wiersz z pliku
+        const rawRow = document.createElement("div");
+        rawRow.className = "detail-row";
+        
+        const rawLabel = document.createElement("div");
+        rawLabel.className = "detail-label";
+        rawLabel.textContent = "Surowe dane:";
+        
+        const rawVal = document.createElement("div");
+        rawVal.className = "detail-value";
+        rawVal.style.wordBreak = "break-all";
+        rawVal.textContent = foundLine;
+        
+        rawRow.appendChild(rawLabel);
+        rawRow.appendChild(rawVal);
+        userInfo.appendChild(rawRow);
+        
+        userInfo.classList.remove("hidden");
+        resultContainer.classList.add("pulse");
+        setTimeout(() => resultContainer.classList.remove("pulse"), 2000);
+      } else {
+        resultContainer.classList.add("not-found");
+        resultIcon.textContent = "❌";
+        
+        if (searchingForIP) {
+          result.textContent = `Adres IP "${input}" nie znaleziony.`;
+        } else {
+          result.textContent = `Nick "${input}" nie znaleziony.`;
+        }
+      }
+    }
+    
+    function formatLabel(key) {
+      const labels = {
+        'nick': 'Nick',
+        'email': 'Email',
+        'ip': 'Adres IP',
+        'data': 'Data',
+        'rola': 'Rola',
+        'haslo': 'Hasło'
+      };
+      return labels[key] || key.charAt(0).toUpperCase() + key.slice(1);
+    }
+    
+    // Obsługa wyszukiwania po wciśnięciu Enter
+    document.getElementById("nickInput").addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        searchNick();
+      }
+    });
+    
+    // Inicjalizacja strony
+    document.addEventListener("DOMContentLoaded", function() {
+      createParticles();
+      loadFileData(); // Ładujemy dane z pliku od razu przy starcie
+    });
+  </script>
+</body>
+</html>
